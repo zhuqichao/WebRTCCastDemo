@@ -1,0 +1,42 @@
+﻿{
+  "name": "投屏助手",
+  "description": "投屏助手，用于捕获本机桌面视频并投射到大屏设备",
+  "version": "2.0.5",
+  "manifest_version": 2,
+  "minimum_chrome_version": "34",
+  "icons": {
+    "128": "images/128ico.png",
+    "16": "images/16ico.png",
+    "48": "images/48ico.png"
+  },
+  "permissions": [
+    "desktopCapture",
+    "tabs"
+  ],
+  "background": {
+    "scripts": [
+      "background.js"
+    ]
+  },
+  "content_scripts": [
+    {
+      "js": [
+        "content.js"
+      ],
+      "matches": [
+        "http://localhost:8089/*",
+        "http://10.5.174.135/*"
+      ]
+    }
+  ],
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:8089/*",
+      "http://10.5.174.135/*"
+    ]
+  },
+  "browser_action": {
+    "default_icon": "images/128ico.png",
+    "default_title": "投屏助手"
+  }
+}
