@@ -3,6 +3,7 @@ import baseHost from './baseHost.js'
 let connect = {}
 let uid = uuid()
 
+
 function createWebsocket(pingCode, obj, callback) {
   if ('WebSocket' in window) {
     let url = baseHost.getSocketHost() + '/' + uid + "/" + pingCode + "/web"
@@ -14,10 +15,9 @@ function createWebsocket(pingCode, obj, callback) {
       console.log('成功建立websocket连接')
       callback.call(obj, {connected: true, message: "连接成功"})
     }
-
-    ws.onmessage = function (eve) {
-      console.log("收到消息：" + eve)
-      //receviceMessage(eve, sender, callback, objs)
+    ws.onmessage = function (message) {
+      console.log("收到消息：" + message.data)
+      handleReceivedMessage(JSON.parse(message.data), obj, callback)
     }
     ws.onerror = function (eve) {
       callback.call(obj, {connected: false, message: "连接失败请检查你的网络或服务器发生错误"})
@@ -27,6 +27,36 @@ function createWebsocket(pingCode, obj, callback) {
       ws = null
     }
     return connect
+  }
+}
+
+function handleReceivedMessage(message, obj, callback) {
+  switch (message.head.type) {
+    case MessageType.REFUSE:
+      closeConnect(false, "设备拒绝投屏", obj, callback)
+      break;
+    case MessageType.READY:
+      connect.pc.createOffer().then(function (des) {
+        connect.pc.setLocalDescription(des).then(function (params) {
+          sendMessage(MessageType.DESC, connect.pc.localDescription)
+        })
+      })
+      break;
+    case MessageType.CLOSE:
+      closeConnect(false, message.body.message, obj, callback)
+      break;
+    case MessageType.DESC:
+      if (message.body.type === "answer") {
+        connect.pc.setRemoteDescription(new RTCSessionDescription(message.body), function () {
+        })
+      }
+      break;
+    case MessageType.CANDIDATE:
+      connect.pc.addIceCandidate(message.body).then(function (params) {
+      })
+      break;
+    default:
+      break;
   }
 }
 
@@ -40,7 +70,9 @@ function createPeerConnection(obj, callback) {
   let pc = new RTCPeerConnection(rtcConfig)
   connect.pc = pc
   pc.onicecandidate = function (candidate) {
-    sendMessage(MessageType.CANDIDATE, candidate.candidate)
+    if (candidate.candidate) {
+      sendMessage(MessageType.CANDIDATE, candidate.candidate)
+    }
   }
   pc.onnegotiationneeded = function () {
     try {
@@ -87,7 +119,7 @@ function createPeerConnection(obj, callback) {
         }
       }
       if (!message.sourceId) {
-        closeConnect("获取媒体源失败", obj, callback)
+        closeConnect(false, "获取媒体源失败", obj, callback)
         return ''
       }
       if (navigator.mediaDevices) {
@@ -95,10 +127,10 @@ function createPeerConnection(obj, callback) {
           .then(function (stream) {
             connect.stream = stream
             stream.getVideoTracks()[0].onended = function () {
-              closeConnect("关闭投屏", obj, callback)
+              closeConnect(true, "关闭投屏", obj, callback)
             }
             // 发送投屏请求
-            sendMessage(MessageType.OFFER, {confirm: true})
+            sendMessage(MessageType.OFFER, {confirm: false})
             stream.getTracks().forEach(function (track) {
               pc.addTrack(track, stream)
             })
@@ -108,7 +140,7 @@ function createPeerConnection(obj, callback) {
       }
     })
   } else {
-    closeConnect("不支持当前浏览器，请使用Chrome浏览器", obj, callback)
+    closeConnect(false, "不支持当前浏览器，请使用Chrome浏览器", obj, callback)
   }
 }
 
@@ -137,8 +169,14 @@ window.onunload = function () {
   connect = {}
 }
 
-function closeConnect(message, obj, callback) {
+function closeConnect(send, message, obj, callback) {
   if (connect) {
+    if (connect.stream) {
+      connect.stream.stop()
+    }
+    if (send) {
+      sendMessage(MessageType.CLOSE, {message: message})
+    }
     connect.ws.close()
     connect.ws = null
     console.log('WebSocket closing...')
@@ -187,6 +225,12 @@ const MessageType = {
 }
 
 Object.freeze(MessageType);
+
+MediaStream.prototype.stop = function () {
+  this.getTracks().forEach(function (track) {
+    track.stop()
+  })
+}
 
 export default {
   createWebsocket: function (pingCode, obj, callback) {

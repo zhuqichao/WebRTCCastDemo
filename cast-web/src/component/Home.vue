@@ -53,7 +53,7 @@ export default {
           }
         })
       } else {
-        this.toast("设备不存在")
+        this.toast(result.message)
       }
     },
     toast: function (msg, duration) {

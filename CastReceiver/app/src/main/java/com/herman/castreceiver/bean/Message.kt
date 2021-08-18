@@ -18,14 +18,23 @@ data class Message(
   var body: JsonObject,
 )
 
+data class MessageSend<T>(
+  var head: MessageHead,
+  var body: T,
+)
+
 // 投屏请求消息
 data class Offer(
   var confirm: Boolean
 )
 
+data class CastClose(
+  var message: String
+)
+
 // sdp协商信息
 data class Desc(
-  var type: SessionDescription.Type,
+  var type: String,
   var sdp: String,
 )
 

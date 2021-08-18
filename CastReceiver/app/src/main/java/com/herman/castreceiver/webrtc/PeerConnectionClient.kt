@@ -197,6 +197,7 @@ class PeerConnectionClient(private val peerConnectionParameters: PeerConnectionP
   }
 
   fun createAnswer() {
+    Log.d(TAG, "createAnswer: ")
     if (mPeerConnection != null && !isError) {
       Log.d(TAG, "PC create ANSWER")
       isInitiator = false
@@ -210,7 +211,7 @@ class PeerConnectionClient(private val peerConnectionParameters: PeerConnectionP
     }
   }
 
-  fun removeRemoteIceCandidates(candidates: Array<IceCandidate?>?) {
+  fun removeRemoteIceCandidates(candidates: Array<IceCandidate>?) {
     if (mPeerConnection != null && !isError) {
       mPeerConnection?.removeIceCandidates(candidates)
     }
@@ -414,10 +415,7 @@ class PeerConnectionClient(private val peerConnectionParameters: PeerConnectionP
     }
 
     override fun onSetSuccess() {
-      if (mPeerConnection == null || isError) {
-        return
-      }
-      if (isInitiator) {
+      if (isInitiator && mPeerConnection != null && !isError) {
         // For offering peer connection we first create offer and set
         // local SDP, then after receiving answer set remote SDP.
         if (mPeerConnection!!.remoteDescription == null) {

@@ -1,7 +1,6 @@
 package com.herman.castservice.service
 
 import org.springframework.stereotype.Component
-import org.springframework.web.bind.annotation.RequestParam
 import java.util.concurrent.ConcurrentHashMap
 import javax.websocket.OnClose
 import javax.websocket.OnMessage
@@ -10,8 +9,7 @@ import javax.websocket.Session
 import javax.websocket.server.PathParam
 import javax.websocket.server.ServerEndpoint
 
-
-private val webSocketSet = ConcurrentHashMap<String, WebSocket>()
+val webSocketSet = ConcurrentHashMap<String, WebSocket>()
 
 @Component
 @ServerEndpoint(value = "/websocket/{id}/{pingCode}/{device}")
@@ -42,7 +40,10 @@ class WebSocket {
 
     @OnMessage
     fun onMessage(message: String) {
-
         println("[$id] 发来消息：$message")
+        // 转发消息到目标接收者
+        webSocketSet.values.filter { it.pingCode == pingCode && it.id != id }.forEach {
+            it.session?.basicRemote?.sendText(message)
+        }
     }
 }

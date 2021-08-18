@@ -22,12 +22,14 @@ class MainActivity : BaseActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    Log.d(TAG, "onCreate: ")
     setContentView(R.layout.activity_main)
     bindService(Intent(this, CastService::class.java), serviceConnection, Context.BIND_AUTO_CREATE)
   }
 
   override fun onDestroy() {
     super.onDestroy()
+    service?.removeOnSocketStateListener(onSocketStateListener)
     unbindService(serviceConnection)
   }
 
@@ -40,7 +42,6 @@ class MainActivity : BaseActivity() {
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {
-      this@MainActivity.service?.removeOnSocketStateListener(onSocketStateListener)
     }
   }
 

@@ -31,7 +31,14 @@ class CastServiceImpl : CastService {
     }
 
     override fun checkDevice(code: String): NetResponse<DeviceInfo> {
-        val list = devices.values.toList().filter { it.code == code }
-        return NetResponse(list.takeIf { it.isNotEmpty() }?.get(0), SUCCESS, "success")
+        println("检查设备：$code")
+        devices.values.toList().filter { it.code == code }.forEach {
+            return if (webSocketSet[it.id] != null) {
+                NetResponse(it, SUCCESS, "success")
+            } else {
+                NetResponse(null, SUCCESS, "设备不在线")
+            }
+        }
+        return NetResponse(null, SUCCESS, "设备不存在")
     }
 }
