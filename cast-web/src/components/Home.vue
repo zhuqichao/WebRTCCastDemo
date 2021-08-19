@@ -5,7 +5,7 @@
     </label>
     <button v-on:click="onClick(code)">点击投屏</button>
     <br>
-    <h3 v-for="device in devices">
+    <h3 v-for="device in devices" :key='device.id'>
       {{ "id:" + device.id }}
       {{ "code:" + device.code }}
       {{ "name:" + device.name }}
@@ -16,7 +16,6 @@
 
 <script>
 
-import net from '../common/net.js'
 import websocket from '../common/websocket.js'
 import baseHost from '../common/baseHost.js'
 
@@ -30,10 +29,13 @@ export default {
   },
   methods: {
     listDevices: function () {
-      let result = net.getMethod(baseHost.getHost(), {close: true}, 'listDevice')
-      if (result && result.code === 0) {
-        this.devices = result.result
-      }
+      fetch(baseHost.getHost() + '/listDevice')
+          .then(rsp => rsp.json())
+          .then(result => {
+            if (result && result.code === 0) {
+              this.devices = result.result
+            }
+          })
     },
     onClick: function (code) {
       console.log(code)
@@ -41,20 +43,23 @@ export default {
         this.toast("请输入投屏码")
         return
       }
-      let result = net.getMethod(baseHost.getHost(), {pingCode: code, close: true}, "checkDevice")
-      if (result.result) {
-        websocket.createWebsocket(code, this, function (event) {
-          console.log(event)
-          this.toast(event.message)
-          if (event.connected) {
-            websocket.createPeerConnection(this, function (event) {
-              console.log(event)
-            })
-          }
-        })
-      } else {
-        this.toast(result.message)
-      }
+      fetch(baseHost.getHost() + '/checkDevice?pingCode=' + code)
+          .then(rsp => rsp.json())
+          .then(result => {
+            if (result.result) {
+              websocket.createWebsocket(code, this, function (event) {
+                console.log(event)
+                this.toast(event.message)
+                if (event.connected) {
+                  websocket.createPeerConnection(this, function (event) {
+                    console.log(event)
+                  })
+                }
+              })
+            } else {
+              this.toast(result.message)
+            }
+          })
     },
     toast: function (msg, duration) {
       duration = isNaN(duration) ? 3000 : duration;
@@ -73,6 +78,7 @@ export default {
     },
   },
   mounted() {
+
     this.listDevices()
   }
 }
