@@ -1,10 +1,11 @@
+const HOST = "10.4.152.66:8080"
 
 function getHostname() {
-  return "http://localhost:8080/cast"
+  return "http://" + HOST + "/cast"
 }
 
 function getSocketHostname() {
-  return "ws://localhost:8080/websocket"
+  return "ws://" + HOST + "/websocket"
 }
 
 export default {

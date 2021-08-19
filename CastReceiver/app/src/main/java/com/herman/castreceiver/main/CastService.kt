@@ -49,8 +49,10 @@ class CastService : Service() {
     Log.d(TAG, "onCreate: ANDROID_ID=${androidId}")
     NetWork.initDevice(DeviceInfo(androidId, "", Build.PRODUCT, DeviceType.TV), object : NetResult<DeviceInfo> {
       override fun onResult(result: DeviceInfo?, code: Int, message: String) {
-        pingCode = result?.code ?: ""
-        createWebSocket(pingCode)
+        result?.let {
+          pingCode = result.code ?: ""
+          createWebSocket(pingCode)
+        }
       }
     })
   }
