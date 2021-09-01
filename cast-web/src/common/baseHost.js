@@ -1,11 +1,11 @@
-import HOST from "../assets/host";
+let json = require('../assets/host.json');
 
 function getHostname() {
-    return "http://" + HOST + "/cast"
+    return "http://" + json.host + "/cast"
 }
 
 function getSocketHostname() {
-    return "ws://" + HOST + "/websocket"
+    return "ws://" + json.host + "/websocket"
 }
 
 export default {
