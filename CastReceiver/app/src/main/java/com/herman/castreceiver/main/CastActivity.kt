@@ -183,7 +183,7 @@ class CastActivity : BaseActivity() {
   private val onCastMessageListener = object : OnCastMessageListener {
     override fun onCastClosed(castClose: CastClose) {
       runOnUiThread {
-        showToast("close")
+        showToast("PC端关闭投屏")
         closeCastDialog?.dismiss()
         finish()
       }

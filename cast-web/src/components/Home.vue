@@ -1,9 +1,9 @@
 <template>
   <div id="home">
-    <label>
-      <input style="font-size: large" v-model="code" placeholder="请输入投屏码">
-    </label>
-    <button v-on:click="onClick(code)">点击投屏</button>
+<!--    <label>-->
+<!--      <input style="font-size: large" v-model="code" placeholder="请输入投屏码">-->
+<!--    </label>-->
+<!--    <button v-on:click="onClick(code)">点击投屏</button>-->
     <br>
     <h3 v-for="device in devices" :key='device.id'>
       {{ "id:" + device.id }}

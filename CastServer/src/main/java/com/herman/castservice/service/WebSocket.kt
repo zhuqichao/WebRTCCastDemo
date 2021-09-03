@@ -2,10 +2,7 @@ package com.herman.castservice.service
 
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
-import javax.websocket.OnClose
-import javax.websocket.OnMessage
-import javax.websocket.OnOpen
-import javax.websocket.Session
+import javax.websocket.*
 import javax.websocket.server.PathParam
 import javax.websocket.server.ServerEndpoint
 
@@ -45,5 +42,10 @@ class WebSocket {
         webSocketSet.values.filter { it.pingCode == pingCode && it.id != id }.forEach {
             it.session?.basicRemote?.sendText(message)
         }
+    }
+
+    @OnError
+    fun onError(session: Session, error: Throwable) {
+        error.printStackTrace()
     }
 }
