@@ -81,59 +81,73 @@ function createPeerConnection(obj, callback) {
 
     let browser = getBrowserInfo()
     let hasAudioOut = false
+    let source = "desktop"
+    let constraints
     if (browser.browser === 'chrome') {
-        navigator.mediaDevices.enumerateDevices()
-            .then(function (devices) {
-                devices.forEach(function (deviceInfo) {
-                    if (deviceInfo.kind === 'audiooutput') {//检测是否有声音输出设备
-                        hasAudioOut = true
-                    }
-                })
-            })
-        chrome.runtime.sendMessage(sessionStorage.getScreenMediaJSExtensionId, {
-            type: 'getScreen',
-            options: ['screen', 'window', 'tab', 'audio']
-        }, function (message) {
-            let constraints = {
-                video: {
-                    mandatory: {
-                        chromeMediaSource: 'desktop',
-                        maxWidth: 1920,
-                        maxHeight: 1080,
-                        maxFrameRate: 30,
-                        sourceId: message.sourceId
-                    }
-                }
-            }
-            if (hasAudioOut) {
-                constraints.audio = {
-                    mandatory: {
-                        chromeMediaSource: 'desktop',
-                        sourceId: message.sourceId
-                    }
-                }
-            }
-            if (!message.sourceId) {
-                closeConnect(false, "获取媒体源失败", obj, callback)
-                return ''
-            }
-            if (navigator.mediaDevices) {
-                navigator.mediaDevices.getUserMedia(constraints)
-                    .then(function (stream) {
-                        connect.stream = stream
-                        stream.getVideoTracks()[0].onended = function () {
-                            closeConnect(true, "关闭投屏", obj, callback)
+        if (source === "desktop") {
+            navigator.mediaDevices.enumerateDevices()
+                .then(function (devices) {
+                    devices.forEach(function (deviceInfo) {
+                        if (deviceInfo.kind === 'audiooutput') {//检测是否有声音输出设备
+                            hasAudioOut = true
                         }
-                        // 发送投屏请求
-                        sendMessage(MessageType.OFFER, {confirm: false})
-                        stream.getTracks().forEach(function (track) {
-                            pc.addTrack(track, stream)
-                        })
                     })
+                })
+            chrome.runtime.sendMessage(sessionStorage.getScreenMediaJSExtensionId, {
+                type: 'getScreen',
+                options: ['screen', 'window', 'tab', 'audio']
+            }, function (message) {
+                constraints = {
+                    video: {
+                        mandatory: {
+                            chromeMediaSource: 'desktop',
+                            maxWidth: 1920,
+                            maxHeight: 1080,
+                            maxFrameRate: 30,
+                            sourceId: message.sourceId
+                        }
+                    }
+                }
+                if (hasAudioOut) {
+                    constraints.audio = {
+                        mandatory: {
+                            chromeMediaSource: 'desktop',
+                            sourceId: message.sourceId
+                        }
+                    }
+                }
+                if (!message.sourceId) {
+                    closeConnect(false, "获取媒体源失败", obj, callback)
+                    return ''
+                }
+                createOffer(constraints, pc, obj, callback)
+            })
+        } else {
+            constraints = window.constraints = {
+                audio: true,
+                video: true
             }
-        })
+            createOffer(constraints, pc, obj, callback)
+        }
     } else {
         closeConnect(false, "不支持当前浏览器，请使用Chrome浏览器", obj, callback)
+    }
+}
+
+function createOffer(constraints, pc, obj, callback) {
+    if (navigator.mediaDevices) {
+        navigator.mediaDevices.getUserMedia(constraints)
+            .then(function (stream) {
+                connect.stream = stream
+                stream.getVideoTracks()[0].onended = function () {
+                    closeConnect(true, "关闭投屏", obj, callback)
+                }
+                // 发送投屏请求
+                sendMessage(MessageType.OFFER, {confirm: false})
+                stream.getTracks().forEach(function (track) {
+                    pc.addTrack(track, stream)
+                })
+            })
     }
 }
 
