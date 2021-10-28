@@ -143,7 +143,7 @@ function createOffer(constraints, pc, obj, callback) {
                     closeConnect(true, "关闭投屏", obj, callback)
                 }
                 // 发送投屏请求
-                sendMessage(MessageType.OFFER, {confirm: false})
+                sendMessage(MessageType.OFFER, {confirm: true})
                 stream.getTracks().forEach(function (track) {
                     pc.addTrack(track, stream)
                 })
